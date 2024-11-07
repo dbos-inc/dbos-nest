@@ -17,5 +17,9 @@ export class DBOSService {
   DBOS() {
     return DBOS.executor;
   }
+
+  async destroy() {
+    await DBOS.shutdown();
+  }
 }
 
