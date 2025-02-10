@@ -18,3 +18,6 @@ database:
 runtimeConfig:
   entrypoints:
     - dist/operations.js
+telemetry:
+  logs:
+    logLevel: debug
