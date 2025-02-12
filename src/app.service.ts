@@ -20,13 +20,13 @@ export class AppService extends ConfiguredInstance {
   @DBOS.workflow()
   async getHello() {
     DBOS.logger.info("Hello from a wf");
-    await this.sendhttprequest();
+    await this.sendHTTPrequest();
     const res = await this.insert();
     return JSON.stringify(res);
   }
 
   @DBOS.step()
-  async sendhttprequest() {
+  async sendHTTPrequest() {
     const response = await fetch("https://example.com");
     const data = await response.text();
     return data;
