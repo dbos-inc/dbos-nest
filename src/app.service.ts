@@ -1,13 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { DBOS } from "@dbos-inc/dbos-sdk";
-import { uniqueNamesGenerator, Config, adjectives, colors, animals } from 'unique-names-generator';
-
-const config: Config = {
-  dictionaries: [adjectives, colors, animals], // Order of dictionaries
-  separator: '-',
-  length: 2,
-  style: 'capital', // Capitalizes each word
-};
+import { ConfiguredInstance, DBOS, InitContext } from "@dbos-inc/dbos-sdk";
+import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 
 interface GreetingRecord {
   greeting_name: string;
@@ -15,27 +8,41 @@ interface GreetingRecord {
 }
 
 @Injectable()
-export class AppService {
+export class AppService extends ConfiguredInstance {
+  constructor(name: string) {
+    super(name);
+  }
+
+  async initialize(ctx: InitContext): Promise<void> {
+    DBOS.logger.info(`Initializing DBOS provider {this.name}`);
+  }
+
   @DBOS.workflow()
-  static async getHello() {
+  async getHello() {
     DBOS.logger.info("Hello from a wf");
-    await AppService.sendhttprequest();
-    await AppService.insert();
-    return "Hello World!";
+    await this.sendhttprequest();
+    const res = await this.insert();
+    return JSON.stringify(res);
   }
 
   @DBOS.step()
-  static async sendhttprequest() {
+  async sendhttprequest() {
     const response = await fetch("https://example.com");
     const data = await response.text();
     return data;
   }
 
   @DBOS.transaction()
-  static async insert(): Promise<GreetingRecord> {
-       const randomName: string = uniqueNamesGenerator(config);
-      return DBOS.knexClient<GreetingRecord>("dbos_greetings").insert(
+  async insert(): Promise<string> {
+      const randomName: string = uniqueNamesGenerator({
+        dictionaries: [adjectives, colors, animals],
+        separator: '-',
+        length: 2,
+        style: 'capital',
+      });
+      return await DBOS.knexClient<GreetingRecord>("dbos_greetings").insert(
           { greeting_name: randomName, greeting_note_content: "Hello World!" },
-      );
+          ["greeting_name", "greeting_note_content"],
+      )
   }
 }
